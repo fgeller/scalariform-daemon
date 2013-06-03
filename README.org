@@ -1,0 +1,4 @@
+#+TITLE: scalariform-daemon
+* README
+
+  Play project: Trigger formatting of files via HTTP requests.
