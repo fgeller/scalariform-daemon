@@ -1,9 +1,8 @@
 package daemon
 
-import akka.actor.{ActorSystem, Props}
+import akka.actor.{ ActorSystem, Props }
 import akka.io.IO
 import spray.can.Http
-
 
 object Runner extends App {
 

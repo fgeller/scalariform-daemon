@@ -1,15 +1,14 @@
 package daemon
 
-import akka.actor.{Actor, ActorRef, Props}
+import akka.actor.{ Actor, ActorRef, Props }
 import akka.pattern.ask
 import akka.util.Timeout
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scalariform.formatter.ScalaFormatter
-import scalariform.formatter.preferences.{IFormattingPreferences, PreferencesImporterExporter}
-import scalax.io.{Codec, Input, Output, Resource}
+import scalariform.formatter.preferences.{ IFormattingPreferences, PreferencesImporterExporter }
+import scalax.io.{ Codec, Input, Output, Resource }
 import spray.routing._
-
 
 object Utils {
 
