@@ -10,6 +10,6 @@ object Runner extends App {
 
   val handler = system.actorOf(Props[DaemonServiceActor], name = "handler")
 
-  IO(Http) ! Http.Bind(handler, "localhost", port = 8080)
+  IO(Http) ! Http.Bind(handler, "localhost", port = 5474)
 
 }
