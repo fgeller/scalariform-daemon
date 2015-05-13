@@ -10,7 +10,6 @@ import scalax.io.{ Codec, Input, Output, Resource }
 import akka.http.scaladsl.server.Directives._
 import akka.stream.FlowMaterializer
 
-
 object Utils {
 
   def timing[T](what: String)(fun: ⇒ T) = {
@@ -53,11 +52,10 @@ trait FileFormatter {
 class FileFormatterActor extends Actor with FileFormatter {
 
   def receive = {
-    case FileFormatRequest(fileName, preferencesFile) ⇒ sender ! formatFile(fileName, preferencesFile)
+    case FileFormatRequest(fileName, preferencesFile) ⇒ formatFile(fileName, preferencesFile)
   }
 
 }
-
 
 trait DaemonService {
   implicit val system: ActorSystem
@@ -68,12 +66,12 @@ trait DaemonService {
 
   def routes = {
     path("format")
-      get {
-        parameters('fileName.as[String], 'preferencesFile.as[String]).as(FileFormatRequest) { req ⇒
-          (fileFormatter ! req)
-          complete { s"Received and scheduled $req" }
-         }
-       }
-   }
- }
- 
+    get {
+      parameters('fileName.as[String], 'preferencesFile.as[String]).as(FileFormatRequest) { req ⇒
+        (fileFormatter ! req)
+        complete { s"Received and scheduled $req" }
+      }
+    }
+  }
+}
+
