@@ -3,7 +3,7 @@ Trigger formatting of files via HTTP requests.
 
 ### Build
 
-    sbt package
+    sbt assembly
 
 ### Run
 
