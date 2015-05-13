@@ -1,14 +1,15 @@
 package daemon
 
-import akka.actor.{ Actor, ActorRef, Props }
-import akka.pattern.ask
+import akka.actor.{ Actor, Props, ActorSystem }
 import akka.util.Timeout
-import scala.concurrent.ExecutionContext
+import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration._
 import scalariform.formatter.ScalaFormatter
 import scalariform.formatter.preferences.{ IFormattingPreferences, PreferencesImporterExporter }
 import scalax.io.{ Codec, Input, Output, Resource }
-import spray.routing._
+import akka.http.scaladsl.server.Directives._
+import akka.stream.FlowMaterializer
+
 
 object Utils {
 
@@ -57,28 +58,22 @@ class FileFormatterActor extends Actor with FileFormatter {
 
 }
 
-class DaemonServiceActor extends Actor with DaemonService {
-  def actorRefFactory = context
-  def receive = runRoute(daemonRoutes)
-  def timeout = Timeout(10 seconds)
-  val fileFormatter = context.actorOf(Props[FileFormatterActor], name = "file-formatter")
-}
 
-trait DaemonService extends HttpService {
-  implicit val executionContext = actorRefFactory.dispatcher
-  def timeout: Timeout
-  implicit val askTimeout = timeout
-  val fileFormatter: ActorRef
+trait DaemonService {
+  implicit val system: ActorSystem
+  implicit def executor: ExecutionContextExecutor
+  implicit val materializer: FlowMaterializer
 
-  def daemonRoutes = {
-    pathPrefix("format") {
+  lazy val fileFormatter = system.actorOf(Props(classOf[FileFormatterActor]))
+
+  def routes = {
+    path("format")
       get {
         parameters('fileName.as[String], 'preferencesFile.as[String]).as(FileFormatRequest) { req ⇒
-          (fileFormatter ? req)
+          (fileFormatter ! req)
           complete { s"Received and scheduled $req" }
-        }
-      }
-    }
-  }
-
-}
+         }
+       }
+   }
+ }
+ 
