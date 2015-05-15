@@ -1,14 +1,14 @@
 package daemon
 
-import akka.actor.{ Actor, ActorRef, Props }
-import akka.pattern.ask
+import akka.actor.{ Actor, Props, ActorSystem }
 import akka.util.Timeout
-import scala.concurrent.ExecutionContext
+import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration._
 import scalariform.formatter.ScalaFormatter
 import scalariform.formatter.preferences.{ IFormattingPreferences, PreferencesImporterExporter }
 import scalax.io.{ Codec, Input, Output, Resource }
-import spray.routing._
+import akka.http.scaladsl.server.Directives._
+import akka.stream.FlowMaterializer
 
 object Utils {
 
@@ -52,33 +52,26 @@ trait FileFormatter {
 class FileFormatterActor extends Actor with FileFormatter {
 
   def receive = {
-    case FileFormatRequest(fileName, preferencesFile) ⇒ sender ! formatFile(fileName, preferencesFile)
+    case FileFormatRequest(fileName, preferencesFile) ⇒ formatFile(fileName, preferencesFile)
   }
 
 }
 
-class DaemonServiceActor extends Actor with DaemonService {
-  def actorRefFactory = context
-  def receive = runRoute(daemonRoutes)
-  def timeout = Timeout(10 seconds)
-  val fileFormatter = context.actorOf(Props[FileFormatterActor], name = "file-formatter")
-}
+trait DaemonService {
+  implicit val system: ActorSystem
+  implicit def executor: ExecutionContextExecutor
+  implicit val materializer: FlowMaterializer
 
-trait DaemonService extends HttpService {
-  implicit val executionContext = actorRefFactory.dispatcher
-  def timeout: Timeout
-  implicit val askTimeout = timeout
-  val fileFormatter: ActorRef
+  lazy val fileFormatter = system.actorOf(Props(classOf[FileFormatterActor]))
 
-  def daemonRoutes = {
-    pathPrefix("format") {
-      get {
-        parameters('fileName.as[String], 'preferencesFile.as[String]).as(FileFormatRequest) { req ⇒
-          (fileFormatter ? req)
-          complete { s"Received and scheduled $req" }
-        }
+  def routes = {
+    path("format")
+    get {
+      parameters('fileName.as[String], 'preferencesFile.as[String]).as(FileFormatRequest) { req ⇒
+        (fileFormatter ! req)
+        complete { s"Received and scheduled $req" }
       }
     }
   }
-
 }
+

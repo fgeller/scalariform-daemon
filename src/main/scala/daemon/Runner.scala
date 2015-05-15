@@ -1,15 +1,13 @@
 package daemon
 
-import akka.actor.{ ActorSystem, Props }
-import akka.io.IO
-import spray.can.Http
+import akka.actor.ActorSystem 
+import akka.stream.ActorFlowMaterializer
+import akka.http.scaladsl.Http
 
-object Runner extends App {
+object Runner extends App with DaemonService {
+  override implicit val system = ActorSystem()
+     override implicit val executor = system.dispatcher
+  override implicit val materializer = ActorFlowMaterializer()
 
-  implicit val system = ActorSystem("scalariform-daemon")
-
-  val handler = system.actorOf(Props[DaemonServiceActor], name = "handler")
-
-  IO(Http) ! Http.Bind(handler, "localhost", port = 5474)
-
+  Http().bindAndHandle(routes, "localhost", 5474)
 }
