@@ -9,4 +9,7 @@ Trigger formatting of files via HTTP requests.
 
     java -jar ./target/scala-2.11/scalariform-daemon.jar
 
+or
+
+    sbt run
 
