@@ -21,13 +21,14 @@ Make an HTTP request against localhost and provide the `fileName` and `preferenc
 
 For example, in my Emacs config I have the following call added to
 `before-save-hook` in Scala buffers, where `scalariform-preferences-file` is a
-directory local variable I set in my Scala projects:
+[directory local variable](http://www.gnu.org/software/emacs/manual/html_node/emacs/Directory-Variables.html)
+I set in my Scala projects:
 
     (defun scalariform-daemon-format-file ()
       (when (and (boundp 'scalariform-preferences-file) scalariform-preferences-file)
         (request
          "http://127.0.0.1:5474/format"
          :params `((fileName . ,buffer-file-name)
-                   (preferencesFile . ,scalariform-preferences-file)))))
-
-
+                   (preferencesFile . ,scalariform-preferences-file))
+         :sync t)
+        (revert-buffer t t)))
