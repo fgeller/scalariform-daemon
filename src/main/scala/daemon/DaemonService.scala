@@ -1,14 +1,16 @@
 package daemon
 
 import akka.actor.{ Actor, Props, ActorSystem }
+import akka.http.scaladsl.server.Directives._
+import akka.pattern.ask
+import akka.stream.FlowMaterializer
 import akka.util.Timeout
-import scala.concurrent.ExecutionContextExecutor
+
+import scala.concurrent._
 import scala.concurrent.duration._
 import scalariform.formatter.ScalaFormatter
 import scalariform.formatter.preferences.{ IFormattingPreferences, PreferencesImporterExporter }
 import scalax.io.{ Codec, Input, Output, Resource }
-import akka.http.scaladsl.server.Directives._
-import akka.stream.FlowMaterializer
 
 object Utils {
 
@@ -37,6 +39,7 @@ trait FileFormatter {
     val preferences = loadPreferences(preferencesFile)
     val (in, out) = openFile(fileName)
     val contents = in.string(Codec.UTF8)
+
     val formatted = formatString(contents, preferences)
 
     if (formatted != contents) out.write(formatted)(Codec.UTF8)
@@ -52,7 +55,7 @@ trait FileFormatter {
 class FileFormatterActor extends Actor with FileFormatter {
 
   def receive = {
-    case FileFormatRequest(fileName, preferencesFile) ⇒ formatFile(fileName, preferencesFile)
+    case FileFormatRequest(fileName, preferencesFile) ⇒ sender ! formatFile(fileName, preferencesFile)
   }
 
 }
@@ -68,8 +71,9 @@ trait DaemonService {
     path("format")
     get {
       parameters('fileName.as[String], 'preferencesFile.as[String]).as(FileFormatRequest) { req ⇒
-        (fileFormatter ! req)
-        complete { s"Received and scheduled $req" }
+        implicit val timeout = Timeout(30.seconds)
+        val result = Await.result(fileFormatter ? req, 30.seconds)
+        complete { "DONE" }
       }
     }
   }
